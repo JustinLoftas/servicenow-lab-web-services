@@ -7,38 +7,54 @@
         <scoped_name>x_fpuk2_int_lab_OrderItem</scoped_name>
         <script><![CDATA[(function scriptedWebServiceOperation(request, response) {
 	try {
-		var information;
+	    //Create an object variable to hold the item information as an object
+		var information = {};
+		//Declare a JSON API object
 		var json = new global.JSON();
+		
+		//Check the item exists in the catalog
 		var catItem = new GlideRecord('sc_cat_item');
 		catItem.addActiveQuery();
 		catItem.addQuery('name', request.item);
 		catItem.query();
 		if (catItem.next()){
+			//Get the sys_id of the user
 			var user = new GlideRecord("sys_user");
 			user.get("user_name", request.requested_for);
+			//Define our item that we are going to order as an object
 			var itemBody = {};
 			var itemId = catItem.getValue('sys_id');
 			itemBody.sysparm_id = itemId;
 			itemBody.sysparm_quantity = request.quantity;
 			itemBody.variables = {};
             itemBody.sysparm_cart_name = "cart_" + itemId;
+			
+			//Create a new cart
 			var newCart = new sn_sc.CartJS("cart_" + itemId);
+			
+			//Get the new sys_id of the cart
 			var cartId = newCart.getCartID();
+			//We need to get the cart as a GlideObject as there are no functions to update the fields
 			var cart = new GlideRecord('sc_cart');
 			cart.get(cartId);
 			cart.setValue('requested_for', user.getValue('sys_id'));
 			
+			//Check if we have item information, if so turn them into an object so we can iterate through them
 			if (request.item_information){
 				information = json.decode(request.item_information);
 			}
+			
+			//We have to populate the 'variables' property with out item information
 			for (var question in information){
 				itemBody.variables[question] = information[question].toString();
-				gs.info('Variable: ' + itemBody.variables[question]);
 			}
 			cart.setValue('special_instructions', request.special_instructions);
 			cart.setValue('delivery_address', request.delivery_address);
 			cart.update();
+			
+			//Order our item
 			var result = newCart.orderNow(itemBody);
+			//If success then retrun the details of the request back to the SOAP response
 			if (result){
 				var requestId =  result.request_id; 
 				var scRequest = new GlideRecord('sc_request');
@@ -68,7 +84,7 @@
         <sys_created_on>2016-11-02 16:06:59</sys_created_on>
         <sys_customer_update>true</sys_customer_update>
         <sys_id>650a36966f362a009312a107eb3ee4e4</sys_id>
-        <sys_mod_count>34</sys_mod_count>
+        <sys_mod_count>37</sys_mod_count>
         <sys_name>OrderItem</sys_name>
         <sys_package display_value="Integration Lab" source="x_fpuk2_int_lab">82ebe6526f362a009312a107eb3ee4e6</sys_package>
         <sys_policy/>
@@ -76,7 +92,7 @@
         <sys_scope display_value="Integration Lab">82ebe6526f362a009312a107eb3ee4e6</sys_scope>
         <sys_update_name>sys_web_service_650a36966f362a009312a107eb3ee4e4</sys_update_name>
         <sys_updated_by>jloftas</sys_updated_by>
-        <sys_updated_on>2016-11-11 14:34:03</sys_updated_on>
+        <sys_updated_on>2016-11-11 15:01:36</sys_updated_on>
         <wsdl>https://piit02.service-now.com/x_fpuk2_int_lab_OrderItem.do?WSDL</wsdl>
     </sys_web_service>
 </record_update>
